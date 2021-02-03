@@ -5,19 +5,36 @@
     <title>Chat Room</title>
 </head>
 <body>
+    <h1>{{ room_name }}</h1>
+    <div id="div">
+    {% for message in messages %}
+    <p>{% if message.user %}{{ message.user.username }}{% else %} AnoNYmous {% endif %} -  {{ message.text }}</p>
+    {% endfor %}
+    </div>
     <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
     <input id="chat-message-input" type="text" size="100"/><br/>
+    <input id="chat-username-input" type="hidden" value="{{ user_name }}">
     <input id="chat-message-submit" type="button" value="Send"/>
 </body>
+
 <script>
+    // let messages = {{ messages }}
+    // console.log(messages)
+    // for (message in messages) {
+    //     document.querySelector('#chat-log').value += (
+    //         message + '\n' + messages[message] + '\n');
+    // }
     var roomName = {{ room_name_json }}
     var chatSocket = new WebSocket(
         'ws://' + window.location.host + '/ws/chat/' + roomName + '/');
-    
+    console.log(document.querySelector('#div'))
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
         var message = data['message'];
-        document.querySelector('#chat-log').value += (message + '\n');
+        let username = data['username']
+        let p = document.createElement('p')
+        p.innerHTML = username + ' - ' + message
+        document.querySelector('#div').append(p)
     };
 
     chatSocket.onclose = function(e) {
@@ -33,12 +50,14 @@
 
     document.querySelector('#chat-message-submit').onclick = function(e) {
         var messageInputDom = document.querySelector('#chat-message-input');
+        let usernameInputDom = document.querySelector('#chat-username-input')
+        let username = usernameInputDom.value
         var message = messageInputDom.value;
         chatSocket.send(JSON.stringify({
-            'message': message
+            'message': message,
+            'username': username
         }));
-
-        messageInputDom.value = '';
+        messageInputDom.value = ''
     };
 </script>
 </html>
